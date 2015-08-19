@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Pusher.Events;
 using Pusher.Exceptions;
+using System.Diagnostics;
 
 namespace Pusher
 {
@@ -32,6 +33,7 @@ namespace Pusher
 
 		public Pusher(IConnectionFactory factory, string appKey, Options options)
 		{
+			Debug.WriteLine ("Created pusher object");
 			_connectionFactory = factory;
 			_channels = new Dictionary<string, Channel>();
 			_contracts = new List<IEventContract>
@@ -52,6 +54,7 @@ namespace Pusher
 
 			GetEventSubscription<ConnectionEstablishedEventArgs>().EventEmitted += async (sender, evt) =>
 				{
+					Debug.WriteLine("Connection established event emitted");
 					SocketId = evt.DataObject.SocketId;
 					foreach (var channel in _channels)
 					{
@@ -73,11 +76,16 @@ namespace Pusher
 
 		public async Task ConnectAsync()
 		{
-			_connection = _connectionFactory.Create(new Uri(string.Format("{0}://ws.pusherapp.com:{1}/app/{2}?protocol=5", _options.SchemeString, _options.Port,
+			Debug.WriteLine ("Creating connection service");
+			_connection = _connectionFactory.Create(new Uri(string.Format("{0}://ws.pusherapp.com:{1}/app/{2}?protocol=7", _options.SchemeString, _options.Port,
 					                      ApplicationKey)));
+
 			_connection.OnData += ReceivedEvent;
 		    _connection.OnError += OnError;
-
+			_connection.OnOpen += async (sender, e) => {
+				Debug.WriteLine("On Open called");
+				Debug.WriteLine("Socket Id: {0}", SocketId);
+			};
 		    var waitForEventTask = WaitForSingleEventAsync<ConnectionEstablishedEventArgs>();
 			await _connection.Open();
 			await waitForEventTask;
@@ -90,8 +98,10 @@ namespace Pusher
                 (_connection as IDisposable).Dispose();
             }
             _connection = null;
+			Debug.WriteLine ("Exception occurred: {0}", e.Exception.Message);
             if (ExceptionOccured == null) return;
 	        ExceptionOccured(this, e);
+
 	    }
 
         /// <summary>
@@ -168,12 +178,14 @@ namespace Pusher
 
 		private async Task<Channel> SubscribeToChannelAsync(string channelName, bool checkChannelList)
 		{
+			Debug.WriteLine ("Subscribing to channel: {0}", channelName);
 			if (checkChannelList && _channels.ContainsKey(channelName))
 			{
 				return _channels[channelName];
 			}
 
 			var channel = CreateChannel(channelName);
+			Debug.WriteLine ("Type of channel: {0}", channel.GetType ());
 			var subscribeEvent = new SubscribeEvent(channelName);
 			if (channel is PrivateChannel && _options.Authenticator == null)
 			{
@@ -181,7 +193,9 @@ namespace Pusher
 			}
 			if (channel is PrivateChannel)
 			{
+				Debug.WriteLine ("Trying to get socket id");
 				var socketId = await GetSocketIdAsync();
+				Debug.WriteLine("Socket id: {0}", socketId);
 				var authentication = await _options.Authenticator.AuthenticateAsync(socketId, channelName);
 				subscribeEvent.Data.Auth = authentication.Auth;
 				subscribeEvent.Data.ChannelData = authentication.ChannelData;
