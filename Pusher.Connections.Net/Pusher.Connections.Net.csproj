@@ -36,7 +36,7 @@
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="WebSocket4Net">
-      <HintPath>..\packages\WebSocket4Net.0.8\lib\net40\WebSocket4Net.dll</HintPath>
+      <HintPath>..\packages\WebSocket4Net.0.13.1\lib\net45\WebSocket4Net.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -45,11 +45,8 @@
     <Compile Include="WebSocketConnectionFactory.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Pusher\Pusher.csproj">
-      <Project>{ff212bec-10ac-49ec-9e57-164cd1cad02e}</Project>
+      <Project>{FF212BEC-10AC-49EC-9E57-164CD1CAD02E}</Project>
       <Name>Pusher</Name>
     </ProjectReference>
   </ItemGroup>
@@ -62,4 +59,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>
